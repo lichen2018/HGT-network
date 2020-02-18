@@ -249,7 +249,7 @@ work_on_select_network_list=function(simi_mat,comm_id_list,select_network_list,o
 
   }
 
-  colnames(result)=c("source","target","weight")
+  #colnames(result)=c("source","target","weight")
   write.table(result,file=out_edges_file,quote=F,row.names = F,sep=",")
 }
 
