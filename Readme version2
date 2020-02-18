@@ -1,0 +1,156 @@
+Readme version2
+
+#test in environment R 3.3.3, python 2.7
+#require R package: ggplot2, reshape2, gplots,WGCNA
+#require python package: argparse,sys,os,pandas,numpy,scipy,igraph,powerlaw,leidenalg,networkx,sklearn,heapq
+
+
+#example test data includes: a series input hgt networks, a groupInfo_file to indicate the character and path of hgt networks, an example abundance matrix.
+
+
+
+###############################################
+#job 0: construct network from abundance matrix
+#input: one abundance matrix
+#parameter: output_dir, keep_whole_adj (default is "T". If the node number is very large, you can set keep_whole_adj to "F" to reduce output file size, and we will keep only edges weight larger than 0.3)
+#output: adjaceny matrix and distance matrix. (default similarity function is correlation, distance function is root squre(1-corr))
+
+python main.py -step network_reconstruction -abundance_file test_data/example_abundance.csv -output_dir test_data/out_test_adj 
+
+
+##############################################################################################
+#job 1: calculate node statistics in each network. 
+#require: a series input hgt networks, a groupInfo_file to indicate the character and path of hgt networks
+#input:groupInfo_file,
+#parameter:network_col=0 (for the column for networks' path),network_id_col=1 (for the column for networks' id),output_dir
+#output:network_node_statistics
+	format and value explain. 
+#example: 
+python main.py -step node_statistics -groupInfo_file test_data/m_and_c/file_groupInfo_whole_withid.csv -output_dir test_data/m_and_c/out_node_statistics -network_col 0 -network_id_col 1
+
+python main.py -step node_statistics -groupInfo_file test_data/IBD/file_groupInfo_IBD.csv -output_dir test_data/IBD/out_node_statistics -network_col 0 -network_id_col 1
+
+
+
+##############################################################################################
+#job 2: calculate network statistics 
+#require: a series input hgt networks, a groupInfo_file to indicate the character and path of hgt networks
+#input:groupInfo_file,
+#parameter:network_col=0,network_id_col=1,output_dir
+#output:network_statistics_table_large
+#example:
+python main.py -step network_statistics -groupInfo_file test_data/m_and_c/file_groupInfo_whole_withid.csv -output_dir test_data/m_and_c/out_network_statistics -network_col 0 -network_id_col 1
+
+python main.py -step network_statistics -groupInfo_file test_data/IBD/file_groupInfo_IBD.csv -output_dir test_data/IBD/out_network_statistics -network_col 0 -network_id_col 1
+
+
+##############################################################################################
+#job 3: aggregate_network 
+#require: a series input hgt networks, a groupInfo_file to indicate the character and path of hgt networks
+#input: groupInfo_file
+#parameter:network_col,network_id_col,group_col,output_dir
+#output:aggregated_network for each group and all
+#example:
+python main.py -step aggregate_network -groupInfo_file test_data/m_and_c/file_groupInfo_whole_withid.csv -output_dir test_data/m_and_c/out_aggregated_network -network_col 0 -network_id_col 1 -group_col 5
+
+python main.py -step aggregate_network -groupInfo_file test_data/m_and_c/file_groupInfo_whole_withid.csv -output_dir test_data/m_and_c/out_aggregated_network -network_col 0 -network_id_col 1 -group_col 3
+
+python main.py -step aggregate_network -groupInfo_file test_data/IBD/file_groupInfo_IBD.csv -output_dir test_data/IBD/out_aggregated_network -network_col 0 -network_id_col 1 -group_col 5
+
+
+##############################################################################################
+#job 4: species_cluster
+#require: 1. a series input hgt networks, a groupInfo_file to indicate the character and path of hgt networks
+			2. aggregated networks or *species_network_mat_property_file_list (network_node_statistics)
+#input: groupInfo_file
+#parameter: species_network_mat_property_file_list, aggregated_network_file, network_col, network_id_col
+#output: node cluster result
+#example:
+python main.py -step species_cluster -groupInfo_file test_data/m_and_c/file_groupInfo_whole_withid.csv -output_dir test_data/m_and_c/out_species_cluster -network_col 0 -network_id_col 1 -aggregated_network_file test_data/m_and_c/out_aggregated_network/aggregated_network_C_mat.csv -species_network_mat_property_file_list test_data/m_and_c/out_node_statistics/network_node_statistics_degree.csv,test_data/m_and_c/out_node_statistics/network_node_statistics_pagerank.csv,test_data/m_and_c/out_node_statistics/network_node_statistics_clustering_coefficient.csv
+
+
+##############################################################################################
+#job 5: community_detection 
+#require: a series input hgt networks, a groupInfo_file to indicate the character and path of hgt networks
+#input: groupInfo_file
+#parameter:network_col,network_id_col,output_dir
+#output:detect community for each network
+#example:
+python main.py -step community_detection -groupInfo_file test_data/m_and_c/file_groupInfo_whole_withid.csv -output_dir test_data/m_and_c/out_community_detection -network_col 0 -network_id_col 1 
+
+python main.py -step community_detection -groupInfo_file test_data/IBD/file_groupInfo_IBD.csv -output_dir test_data/IBD/out_community_detection -network_col 0 -network_id_col 1 
+
+
+
+##############################################################################################
+#job 6: community evolution 
+#require: a series input hgt networks, a groupInfo_file to indicate the character and path of hgt networks
+#			community detection result
+#input: groupInfo_file, community_color_file
+#parameter:network_col,network_id_col,output_dir
+#output: community info and community similarity 
+#example:
+python main.py -step community_evolution -groupInfo_file test_data/m_and_c/file_groupInfo_whole_withid.csv -output_dir test_data/m_and_c/out_community_evolution -network_col 0 -network_id_col 1 -community_color_file test_data/m_and_c/out_community_detection/community_leidenal_community_color.csv -network_id_col 1 -network_col 0
+
+python main.py -step community_evolution -groupInfo_file test_data/IBD/file_groupInfo_IBD.csv -output_dir test_data/IBD/out_community_evolution -network_col 0 -network_id_col 1 -community_color_file test_data/IBD/out_community_detection/community_leidenal_community_color.csv -network_id_col 1 -network_col 0 -network_individual_col 3 -network_time_col 4
+
+
+##############################################################################################
+#job 7: community cluster 
+#require: a series input hgt networks, a groupInfo_file to indicate the character and path of hgt networks
+#			community detection result, community evolution result
+#input: comm_jaccard_simi_mat_file
+#parameter:output_dir, beta(default=1), cut_height(default=0.6), minClusterSize(default=10)
+#output:community cluster
+#example:
+python main.py -step community_cluster -comm_jaccard_simi_mat_file test_data/m_and_c/out_community_evolution/comm_jaccard_simi_mat.csv -output_dir test_data/m_and_c/out_community_cluster -beta 1 -cut_height 0.6 -minClusterSize 2
+
+python main.py -step community_cluster -comm_jaccard_simi_mat_file test_data/IBD/out_community_evolution/comm_jaccard_simi_mat.csv -output_dir test_data/IBD/out_community_cluster -beta 1 -cut_height 0.8 -minClusterSize 5
+
+##############################################################################################
+#job 8: hgt edges(event) cluster 
+#require:  a groupInfo_file to indicate the character(id, or sample) of hgt networks
+#			hgt_event_file, a line for one hgt event, which list all samples it occur(col0 species1, col1 position, col2 species2, col3 position, col4... samples it occur)
+#input: groupInfo_file, hgt_event_file
+#parameter:output_dir, hgt_event_filter(default=5), cut_height(default=0.6), minClusterSize(default=10)
+#output:hgt event cluster
+#example:
+python main.py -step hgt_event_cluster -groupInfo_file test_data/m_and_c/file_groupInfo_whole_withid.csv -hgt_event_file test_data/m_and_c/infant_cluster.hgt.bkp.txt -output_dir test_data/m_and_c/out_hgt_event_cluster -hgt_event_filter 5 -cut_height 0.6 -minClusterSize 10
+
+python main.py -step hgt_event_cluster -groupInfo_file test_data/IBD/file_groupInfo_IBD.csv -hgt_event_file test_data/IBD/ibd_cluster.hgt.bkp.txt -output_dir test_data/IBD/out_hgt_event_cluster -hgt_event_filter 5 -cut_height 0.6 -minClusterSize 5
+
+
+
+##############################################################################################
+#job 9: scale free fit
+#require: a series input hgt networks, a groupInfo_file to indicate the character and path of hgt networks
+#input:groupInfo_file,
+#parameter:network_col=0,network_id_col=1,output_dir
+#output:network_scale_free_fit_table
+#example:
+python main.py -step scale_free_fit -groupInfo_file test_data/m_and_c/file_groupInfo_whole_withid.csv -output_dir test_data/m_and_c/out_scale_free_fit -network_col 0 -network_id_col 1
+
+python main.py -step scale_free_fit -groupInfo_file test_data/IBD/file_groupInfo_IBD.csv -output_dir test_data/IBD/out_scale_free_fit -network_col 0 -network_id_col 1
+
+
+
+##############################################################################################
+#job 9: visualization
+
+
+##############################################################################################
+##############################################################################################
+#pipeline
+#It will calculate node statistics, network statistics, conduct community detection and summarize the information of communities.
+#You can call community cluster after it is done, as described above. 
+#require: a series input hgt networks, a groupInfo_file to indicate the character and path of hgt networks
+#input:groupInfo_file,
+#parameter:network_col=0 (for the column for networks' path),network_id_col=1 (for the column for networks' id),output_dir
+#optional: network_individual_col and network_time_col 
+#example: 
+python main.py -step pipeline -groupInfo_file test_data/IBD/file_groupInfo_IBD.csv -output_dir test_data/IBD/pipeline -network_col 0 -network_id_col 1
+##############################################################################################
+##############################################################################################
+
+
+
